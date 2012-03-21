@@ -115,19 +115,45 @@ HEROKU_PLUGINS_CONFIG="heroku-plugins-$SBT_VERSION.sbt"
 mkdir -p "$SBT_USER_HOME/.sbt/plugins" && curl --silent --max-time 10 --location "http://s3.amazonaws.com/heroku-jvm-langpack-scala/$HEROKU_PLUGINS_CONFIG"  --output "$SBT_USER_HOME/.sbt/plugins/$HEROKU_PLUGINS_CONFIG"
 #echo " done"
 
+# old one:
+## build app
+#echo "-----> Running: sbt $SBT_TASKS"
+#test -e "$SBT_BINDIR"/sbt.boot.properties && PROPS_OPTION="-Dsbt.boot.properties=$SBT_BINDIR/sbt.boot.properties"
+#HOME="$SBT_USER_HOME_ABSOLUTE" java -Xmx512M -Duser.home="$SBT_USER_HOME_ABSOLUTE" -Divy.default.ivy.user.dir="$SBT_USER_HOME_ABSOLUTE/.ivy2" $PROPS_OPTION -jar #"$SBT_BINDIR"/$SBT_JAR $SBT_TASKS 2>&1 | sed -u 's/^/       /'
+#if [ "${PIPESTATUS[*]}" != "0 0" ]; then
+#  echo " !     Failed to build app with SBT $SBT_VERSION"
+##  exit 1
+fi
+
+# new one from
+# from: https://github.com/playframework/Play20/wiki/ProductionHeroku
 # build app
 echo "-----> Running: sbt $SBT_TASKS"
 test -e "$SBT_BINDIR"/sbt.boot.properties && PROPS_OPTION="-Dsbt.boot.properties=$SBT_BINDIR/sbt.boot.properties"
-HOME="$SBT_USER_HOME_ABSOLUTE" java -Xmx512M -Duser.home="$SBT_USER_HOME_ABSOLUTE" -Divy.default.ivy.user.dir="$SBT_USER_HOME_ABSOLUTE/.ivy2" $PROPS_OPTION -jar "$SBT_BINDIR"/$SBT_JAR $SBT_TASKS 2>&1 | sed -u 's/^/       /'
+HOME="$SBT_USER_HOME_ABSOLUTE" java -Xmx512M -Dfile.encoding=UTF8 -Duser.home="$SBT_USER_HOME_ABSOLUTE" -Divy.default.ivy.user.dir="$SBT_USER_HOME_ABSOLUTE/.ivy2" $PROPS_OPTION -jar "$SBT_BINDIR"/$SBT_JAR $SBT_TASKS 2>&1 | sed -u 's/^/       /'
 if [ "${PIPESTATUS[*]}" != "0 0" ]; then
-  echo " !     Failed to build app with SBT $SBT_VERSION"
-  exit 1
+echo " !     Failed to build app with SBT $SBT_VERSION"
+exit 1
 fi
 
+
 # repack cache
+#mkdir -p $CACHE_DIR
+#for DIR in $CACHED_DIRS ; do
+#  rm -rf $CACHE_DIR/$DIR
+#  mkdir -p $CACHE_DIR/$DIR
+#  cp -r $DIR/.  $CACHE_DIR/$DIR
+#done
+
+# repack cache
+# some additions to make play2 work on heroku
+# from: https://github.com/playframework/Play20/wiki/ProductionHeroku
+
 mkdir -p $CACHE_DIR
 for DIR in $CACHED_DIRS ; do
-  rm -rf $CACHE_DIR/$DIR
-  mkdir -p $CACHE_DIR/$DIR
-  cp -r $DIR/.  $CACHE_DIR/$DIR
+rm -rf $CACHE_DIR/$DIR
+mkdir -p $CACHE_DIR/$DIR
+cp -r $DIR/.  $CACHE_DIR/$DIR
+echo "-----> Dropping ivy cache from the slug: $DIR"
+rm -rf $SBT_USER_HOME/.ivy2
 done
