@@ -123,7 +123,7 @@ mkdir -p "$SBT_USER_HOME/.sbt/plugins" && curl --silent --max-time 10 --location
 #if [ "${PIPESTATUS[*]}" != "0 0" ]; then
 #  echo " !     Failed to build app with SBT $SBT_VERSION"
 ##  exit 1
-fi
+#fi
 
 # new one from
 # from: https://github.com/playframework/Play20/wiki/ProductionHeroku
